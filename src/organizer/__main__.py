@@ -128,6 +128,7 @@ Examples:
 
     parser.add_argument(
         "folder",
+        default=".",
         nargs="?",
         help="path to folder to organize",
     )
@@ -138,11 +139,13 @@ Examples:
     )
 
     args = parser.parse_args()
-    folder_path = args.folder
+    if args.folder == ".":
+        folder_path = Path.cwd()
+
+    folder_path = Path(args.folder)
     if not folder_path:
         print("You must provide a path.")
         sys.exit(1)
-
     try:
         with FileOrganizerSession(folder_path) as session:
             print(f"Organizing folder: {folder_path}")
