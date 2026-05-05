@@ -86,20 +86,12 @@ def moveFiles(file, folder, category, dry_run=False):
 
 def get_user_config_dir():
     """Return the user config directory path (platform-specific)."""
-    home = Path.home()
-    # Linux/macOS: ~/.config/organizer/
-    config_dir = home / ".config" / "organizer"
-    if config_dir.exists():
-        return config_dir
-
-    # Windows: %APPDATA%\organizer\
-    appdata = os.environ.get("APPDATA")
-    if appdata:
-        config_dir = Path(appdata) / "organizer"
-        if config_dir.exists():
-            return config_dir
-
-    return home / ".config" / "organizer"
+    if sys.platform == "win32":
+        appdata = os.environ.get("APPDATA")
+        if appdata:
+            return Path(appdata) / "organizer"
+    # Linux/macOS and fallback
+    return Path.home() / ".config" / "organizer"
 
 
 def ensure_user_config():
@@ -107,27 +99,28 @@ def ensure_user_config():
     user_config_dir = get_user_config_dir()
     user_config_file = user_config_dir / "extensions.json"
 
-    if user_config_file.exists():
-        return user_config_file
-
     user_config_dir.mkdir(parents=True, exist_ok=True)
 
-    default_config = Path(__file__).parent / "config" / "extensions.json"
-    if default_config.exists():
-        shutil.copy(default_config, user_config_file)
-        print(f"Created user config at: {user_config_file}")
+    if not user_config_file.exists():
+        default_config = Path(__file__).parent / "config" / "extensions.json"
+        if default_config.exists():
+            shutil.copy(default_config, user_config_file)
+            print(f"Created user config file: {user_config_file}")
+        else:
+            # fallback minimal config (should not happen normally)
+            fallback = {
+                "Images": [".jpg", ".jpeg", ".png", ".gif"],
+                "Documents": [".pdf", ".txt"],
+                "Others": [],
+            }
+            with open(user_config_file, "w") as f:
+                json.dump(fallback, f, indent=2)
+            print(
+                f"Default config missing. Created minimal config at: {user_config_file}"
+            )
     else:
-
-        fallback_config = {
-            "Images": [".jpg", ".jpeg", ".png", ".gif"],
-            "Documents": [".pdf", ".txt"],
-            "Others": [],
-        }
-        with open(user_config_file, "w") as f:
-            json.dump(fallback_config, f, indent=2)
-        print(
-            f"Warning: Default config not found. Created minimal config at {user_config_file}"
-        )
+        # Optional: remind user where config is (can be removed if too verbose)
+        print(f"Using user config: {user_config_file}")
 
     return user_config_file
 
