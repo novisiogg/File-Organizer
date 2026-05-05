@@ -128,9 +128,8 @@ Examples:
 
     parser.add_argument(
         "folder",
-        default=".",
         nargs="?",
-        help="path to folder to organize",
+        help="path to folder to organize (use '.' for current directory)"
     )
     parser.add_argument(
         "--dry-run",
