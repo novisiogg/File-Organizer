@@ -1,6 +1,11 @@
 from pathlib import Path
 import shutil
+import argparse
 import os
+import sys
+src_path = str(Path(__file__).resolve().parent / "src")
+if src_path not in sys.path:
+    sys.path.append(src_path)
 from logger import log, logger
 from exceptions import InvalidFolderError, ProtectedSystemFolder
 from extensions import config
@@ -85,8 +90,32 @@ def sortFiles(folder, session):
 
 
 if __name__ == "__main__":
+    if __name__ == "__main__":
+        parser = argparse.ArgumentParser(
+            description="Organize files in a folder by type (Images, Videos, Documents, etc.)",
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog="""
+    Examples:
+    python main.py                    # Organize current directory
+    python main.py /path/to/folder    # Organize specific folder
+    python main.py C:\\Users\\Downloads  # Organize Downloads folder
+            """,
+        )
+
+        parser.add_argument(
+            "folder",
+            nargs="?",
+            default=os.getcwd(),
+            help="Path to folder to organize (default: current directory)",
+        )
+
+        args = parser.parse_args()
+        folder_path = args.folder
+
+        print(f"Organizing folder: {folder_path}")
+
     try:
-        with FileOrganizerSession("test_folder") as session:
+        with FileOrganizerSession(folder_path) as session:
             sortFiles(session.folder, session)
 
     except ProtectedSystemFolder as e:
