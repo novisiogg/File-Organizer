@@ -1,7 +1,9 @@
 from pathlib import Path
 import shutil
+import os
 from logger import log, logger
 from exceptions import InvalidFolderError, ProtectedSystemFolder
+from extensions import config
 
 
 class FileOrganizerSession:
@@ -144,7 +146,7 @@ def sortFiles(folder, session):
         if not file.is_file():
             continue
         file_extension = file.suffix
-        category = extensions.get(file_extension, "Others")
+        category = config.extensions.get(file_extension, "Others")
         moveFiles(file, folder, category)
         session.count += 1
 
