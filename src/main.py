@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import shutil
-from logging import Logger
+from logger import log, logger
 
 extensions = {
     ".jpg": "Images",
@@ -100,14 +100,14 @@ def moveFiles(file, folder, category):
 
     shutil.move(str(file), str(destination_path))
     print(f"Moved: {file.name} → {destination_path}")
+    logger.info(f"Moved: {file.name} to {destination_path}")
 
-
+@log
 def sortFiles(folder):
     for file in folder.iterdir():
         if not file.is_file():
             continue
         file_extension = getSuffix(file).lower()
-
         category = extensions.get(file_extension, "Others")
         moveFiles(file, folder, category)
 
