@@ -4,7 +4,7 @@ import argparse
 import sys
 import json
 import os
-from organizer.logger import log, logger
+from organizer.logger import log, logger, LOG_FILE
 from organizer.exceptions import InvalidFolderError, ProtectedSystemFolder
 
 
@@ -201,6 +201,7 @@ Examples:
             print(f"Organizing folder: {folder_path}")
             print("")
             sortFiles(session.folder, session, dry_run=args.dry_run)
+            print(f"\Saved logs to: {LOG_FILE}")
     except ProtectedSystemFolder as e:
         print(f"SECURITY ALERT: {e}")
         logger.critical(f"SECURITY VIOLATION ATTEMPT: {e.foldername}")
