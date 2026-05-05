@@ -1,2 +1,4 @@
 /test_folder
 *__pycache__
+*.egg-info
+.venv

@@ -1,0 +1,11 @@
+{
+  "Images": [".jpg", ".jpeg", ".png", ".apng", ".avif", ".jfif", ".pjpeg", ".pjp", ".gif", ".svg", ".webp", ".bmp", ".tiff", ".tif", ".ico", ".heic", ".eps"],
+  "Videos": [".mp4", ".mov", ".webm", ".mkv", ".flv", ".vob", ".ogv", ".avi", ".wmv", ".m4v", ".mpg", ".mpeg", ".3gp", ".3g2", ".f4v", ".swf"],
+  "Documents": [".pdf", ".txt", ".doc", ".docx", ".odt", ".rtf", ".epub", ".md", ".ppt", ".pptx", ".xls", ".xlsx", ".csv", ".pages", ".numbers", ".key"],
+  "Audio": [".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff", ".alac", ".opus", ".mid", ".midi"],
+  "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".iso", ".dmg", ".xz"],
+  "Data": [".json", ".xml", ".yml", ".yaml", ".sql", ".log", ".ini", ".conf", ".env"],
+  "Programming": [".py", ".js", ".ts", ".html", ".css", ".cpp", ".c", ".java", ".go", ".rb", ".php", ".sh"],
+  "Executables": [".exe", ".msi", ".apk", ".app", ".bat"],
+  "Design": [".psd", ".ai", ".xd", ".fig", ".sketch"]
+}
