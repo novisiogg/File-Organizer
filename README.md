@@ -48,13 +48,13 @@ You can easily add or remove extensions and categories.
 ### From GitHub (recommended)
 
 ```bash
-pip install git+https://github.com/yourusername/file-organizer.git
+pip install git+https://github.com/novisiogg/file-organizer.git
 ```
 
 ### From source (for development)
 
 ```bash
-git clone https://github.com/yourusername/file-organizer.git
+git clone https://github.com/novisiogg/file-organizer.git
 cd file-organizer
 pip install -e .
 ```
