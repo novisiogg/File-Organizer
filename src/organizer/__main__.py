@@ -3,13 +3,14 @@ import shutil
 import argparse
 import sys
 import json
+import os
 from organizer.logger import log, logger
 from organizer.exceptions import InvalidFolderError, ProtectedSystemFolder
 
 
 class FileOrganizerSession:
     def __init__(self, folder_path):
-        self.folder = Path(folder_path)
+        self.folder = Path(folder_path).resolve()
         self.count = 0
         self.protected_folders = {
             "Windows",
@@ -83,10 +84,58 @@ def moveFiles(file, folder, category, dry_run=False):
     logger.info(f"Moved: {file.name} to {destination_path}")
 
 
+def get_user_config_dir():
+    """Return the user config directory path (platform-specific)."""
+    home = Path.home()
+    # Linux/macOS: ~/.config/organizer/
+    config_dir = home / ".config" / "organizer"
+    if config_dir.exists():
+        return config_dir
+
+    # Windows: %APPDATA%\organizer\
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        config_dir = Path(appdata) / "organizer"
+        if config_dir.exists():
+            return config_dir
+
+    return home / ".config" / "organizer"
+
+
+def ensure_user_config():
+    """Create user config directory and copy default extensions.json if missing."""
+    user_config_dir = get_user_config_dir()
+    user_config_file = user_config_dir / "extensions.json"
+
+    if user_config_file.exists():
+        return user_config_file
+
+    user_config_dir.mkdir(parents=True, exist_ok=True)
+
+    default_config = Path(__file__).parent / "config" / "extensions.json"
+    if default_config.exists():
+        shutil.copy(default_config, user_config_file)
+        print(f"Created user config at: {user_config_file}")
+    else:
+
+        fallback_config = {
+            "Images": [".jpg", ".jpeg", ".png", ".gif"],
+            "Documents": [".pdf", ".txt"],
+            "Others": [],
+        }
+        with open(user_config_file, "w") as f:
+            json.dump(fallback_config, f, indent=2)
+        print(
+            f"Warning: Default config not found. Created minimal config at {user_config_file}"
+        )
+
+    return user_config_file
+
+
 @log
 def sortFiles(folder, session, dry_run=False):
 
-    config_path = Path(__file__).parent / "config" / "extensions.json"
+    config_path = ensure_user_config()
 
     with open(config_path, "r") as f:
         extensions = json.load(f)
@@ -94,7 +143,7 @@ def sortFiles(folder, session, dry_run=False):
     mapping = {}
     for category, exts in extensions.items():
         for ext in exts:
-            mapping[ext] = category
+            mapping[ext.lower()] = category
 
     for file in folder.iterdir():
         if not file.is_file():
@@ -107,7 +156,6 @@ def sortFiles(folder, session, dry_run=False):
         category = mapping.get(file_extension, "Others")
         if dry_run:
             print(f"[DRY RUN]: {file.name} -> {category}")
-
         else:
             moveFiles(file, folder, category, dry_run=dry_run)
             session.count += 1
@@ -153,15 +201,12 @@ Examples:
             print(f"Organizing folder: {folder_path}")
             print("")
             sortFiles(session.folder, session, dry_run=args.dry_run)
-
     except ProtectedSystemFolder as e:
         print(f"SECURITY ALERT: {e}")
         logger.critical(f"SECURITY VIOLATION ATTEMPT: {e.foldername}")
-
     except InvalidFolderError as e:
         print(f"PATH ERROR: {e}")
         logger.critical(f"INVALID PATH:  {e.foldername}")
-
     except Exception as e:
         print(f"UNCAPTURED ERROR: {e}")
 
