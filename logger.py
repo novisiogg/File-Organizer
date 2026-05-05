@@ -1,13 +1,19 @@
 from functools import wraps
 import logging
-import os
+from pathlib import Path
+import time
 
-DECORATOR_DIR = os.path.dirname(os.path.abspath(__file__))
+DECORATOR_DIR = Path(__file__).resolve().parent
 
-log_file_path = os.path.join(DECORATOR_DIR, "app.log")
+log_dir = DECORATOR_DIR / "logs"
+
+log_dir.mkdir(exist_ok=True)
+
+log_file_path = log_dir / "app.log"
+
+
 # logger configuration
 logging.basicConfig(
-    level=logging.INFO,
     filename=log_file_path,
     filemode="a",
     format="%(asctime)s - %(name)s - %(levelname)s: %(message)s",
@@ -20,10 +26,15 @@ logger = logging.getLogger(__name__)
 def log(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        logger.info(f"{func.__name__} called with args={args}, kwargs={kwargs}")
-        
+        time_before = time.perf_counter()
         result = func(*args, **kwargs)
+        duration = time.perf_counter() - time_before
+
+        msg = f"{func.__name__} | Duration: {duration:.2f}s"
         if result is not None:
-            logger.info(f"{func.__name__} returned: {result}")
+            msg += f" | Result: {result}"
+
+        logger.info(msg)
         return result
+
     return inner
