@@ -66,20 +66,28 @@ After installation, the `organize` command is available system‑wide.
 ```bash
 organize <folder_path> 
 ```
+or 
+```bash
+# To organize the current directory
+organize .
+```
 
 | Option        | Description                                                           |
 | :------------ | :-------------------------------------------------------------------- |
 | `folder_path` | Path to the folder you want to organize (required).                   |
 | `--dry-run`   | Preview what would be moved without actually moving files (optional). |
-
+| `--help`      | Shows a help message.                                                 |
 ### Examples
 
 ```bash
+# Organize the current working directory
+organize .
+
 # Organize your Documents folder
 organize "C:\Users\users\Documents"
 
 # Dry run – see what would happen
-organize "C:\Users\Name\Desktop\Folder" --dry-run
+organize "C:\Users\users\Desktop" --dry-run
 ```
 
 ## Features
