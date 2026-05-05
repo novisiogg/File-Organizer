@@ -129,7 +129,7 @@ Examples:
     parser.add_argument(
         "folder",
         nargs="?",
-        help="path to folder to organize (use '.' for current directory)"
+        help="path to folder to organize (use '.' for current directory)",
     )
     parser.add_argument(
         "--dry-run",
@@ -138,13 +138,15 @@ Examples:
     )
 
     args = parser.parse_args()
+    if args.folder is None:
+        parser.print_help()
+        sys.exit(0)
+
     if args.folder == ".":
         folder_path = Path.cwd()
 
     folder_path = Path(args.folder)
-    if not folder_path:
-        print("You must provide a path.")
-        sys.exit(1)
+
     try:
         with FileOrganizerSession(folder_path) as session:
             print(f"Organizing folder: {folder_path}")
