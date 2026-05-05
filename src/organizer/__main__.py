@@ -201,7 +201,7 @@ Examples:
             print(f"Organizing folder: {folder_path}")
             print("")
             sortFiles(session.folder, session, dry_run=args.dry_run)
-            print(f"\Saved logs to: {LOG_FILE}")
+            print(f"Saved logs to: {LOG_FILE}")
     except ProtectedSystemFolder as e:
         print(f"SECURITY ALERT: {e}")
         logger.critical(f"SECURITY VIOLATION ATTEMPT: {e.foldername}")
