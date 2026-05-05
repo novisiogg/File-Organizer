@@ -52,7 +52,7 @@ class FileOrganizerSession:
         return False
 
 
-def moveFiles(file, folder, category):
+def moveFiles(file, folder, category, dry_run=False):
     destination_folder = folder / category
     destination_folder.mkdir(exist_ok=True)
 
@@ -74,6 +74,9 @@ def moveFiles(file, folder, category):
                 break
 
             count += 1
+    if dry_run:
+        print(f"[DRY RUN] Would move: {file.name} → {destination_path}")
+        return
 
     shutil.move(str(file), str(destination_path))
     print(f"Moved: {file.name} → {destination_path}")
