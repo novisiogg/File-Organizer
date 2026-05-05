@@ -101,8 +101,15 @@ organize "C:\Users\users\Desktop" --dry-run
 
 ## Customization
 
-Edit `extensions.json` to add, remove, or change categories.  
-The file is installed with the package; after modification, the new mapping is used immediately (no re‑installation required).
+To customize categories without losing changes when updating the package:
+
+1. Create a user config folder:
+   - **Linux/macOS**: `~/.config/organizer/`
+   - **Windows**: `%APPDATA%\organizer\`
+
+2. Copy the default `extensions.json` from the package installation into that folder.
+
+3. Edit the copied file – your changes will be remembered across package updates.
 
 ## Requirements
 
