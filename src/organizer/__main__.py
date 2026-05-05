@@ -123,6 +123,7 @@ def main():
 Examples:
   organize C:\\Users\\name\\Downloads
   organize "C:\\Users\\name\\Downloads" --dry-run
+  organize .          # organize current directory
 """,
     )
 
@@ -143,9 +144,9 @@ Examples:
         sys.exit(0)
 
     if args.folder == ".":
-        folder_path = Path.cwd()
-
-    folder_path = Path(args.folder)
+        folder_path = Path.cwd().resolve()
+    else:
+        folder_path = Path(args.folder).resolve()
 
     try:
         with FileOrganizerSession(folder_path) as session:
