@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "file-organizer"
 version = "1.0.0"
-description = "Organize files by extension into categorized folders."
+description = "Organize files by extension into categorized folders"
 readme = "README.md"
 authors = [{name = "novisiogg", email = "novisiovfx@gmail.com"}]
 license = {text = "MIT"}
@@ -19,3 +19,6 @@ requires-python = ">=3.12"
 
 [project.scripts]
 organize = "organizer.__main__:main"
+
+[tool.setuptools.package-data]
+organizer = ["config/*.json"]
