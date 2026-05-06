@@ -196,6 +196,7 @@ def run_undo(log_path, number_of_moves):
 
     to_undo = all_moves[-number_of_moves:]
     print(f"Undoing the last {len(to_undo)} moves...")
+    print("")
 
     for move in reversed(to_undo):
         current = Path(move["current"])
@@ -205,8 +206,10 @@ def run_undo(log_path, number_of_moves):
             try:
                 shutil.move(str(current), str(original))
                 print(f"Restored: {original.name}")
+                logger.info(f"Successfully restored {original.name}")
             except Exception as e:
                 print(f"Error restoring {original.name}: {e}")
+                logger.critical(f"There was an error restorting {original.name}: {e}")
         else:
             print(f"Skip: {current} not found.")
 
