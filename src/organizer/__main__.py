@@ -106,6 +106,9 @@ def ensure_user_config():
         if default_config.exists():
             shutil.copy(default_config, user_config_file)
             print(f"Created user config file: {user_config_file}")
+            logger.info(
+                f"Successfully created user config file at: {user_config_file} "
+            )
             print("")
         else:
             # fallback minimal config (should not happen normally)
@@ -119,6 +122,7 @@ def ensure_user_config():
             print(
                 f"Default config missing. Created minimal config at: {user_config_file}"
             )
+            logger.info(f"Created minimal config at: {user_config_file}")
             print("")
     else:
 
@@ -129,25 +133,17 @@ def ensure_user_config():
 
 
 @log
-def sortFiles(folder, session, dry_run=False):
-
+def sortFiles(folder, session, dry_run=False, recursive=False):
     config_path = ensure_user_config()
-
     with open(config_path, "r") as f:
         extensions = json.load(f)
 
-    mapping = {}
-    for category, exts in extensions.items():
-        for ext in exts:
-            mapping[ext.lower()] = category
-
+    mapping = {ext.lower(): cat for cat, exts in extensions.items() for ext in exts}
     current_script = Path(__file__).resolve()
 
-    # Exclude project root
-    project_root = current_script.parent.parent
+    files_to_process = folder.rglob("*") if recursive else folder.iterdir()
 
-    for file in folder.iterdir():
-
+    for file in files_to_process:
         abs_file = file.resolve()
 
         if not file.is_file():
@@ -156,12 +152,21 @@ def sortFiles(folder, session, dry_run=False):
         if abs_file == current_script or abs_file == LOG_FILE.resolve():
             continue
 
-        if file.name.startswith("."):
+        if any(part.startswith(".") for part in file.parts):
             continue
+
+        if recursive:
+            if (
+                any(cat in file.parts for cat in extensions.keys())
+                or "Others" in file.parts
+            ):
+                continue
 
         file_extension = file.suffix.lower()
         category = mapping.get(file_extension, "Others")
+
         moveFiles(file, folder, category, dry_run=dry_run)
+
         if not dry_run:
             session.count += 1
 
@@ -172,46 +177,63 @@ def stream_log_lines(log_path):
             yield line.strip()
 
 
-def get_moves_from_log(lines):
-    for line in lines:
+def get_moves_from_log(lines, target_folder):
+    target_str = f"--- STARTING SESSION FOR {target_folder} ---"
+    in_session = False
+    session_moves = []
 
-        if "Moved:" in line and " to " in line:
+    for line in lines:
+        if target_str in line:
+            in_session = True
+            session_moves = []
+            continue
+
+        if f"--- ENDING SESSION FOR {target_folder} ---" in line:
+            in_session = False
+            continue
+
+        if in_session and "Moved:" in line and " to " in line:
             try:
                 parts = line.split("Moved: ")[1].split(" to ")
-                original_path = parts[0].strip()
-                new_path = parts[1].strip()
-
-                yield {"original": original_path, "current": new_path}
+                session_moves.append(
+                    {"original": parts[0].strip(), "current": parts[1].strip()}
+                )
             except IndexError:
                 continue
 
+    for move in session_moves:
+        yield move
 
-def run_undo(log_path, number_of_moves):
+
+def run_undo(log_path, target_folder, limit=10):
     lines = stream_log_lines(log_path)
-    all_moves = list(get_moves_from_log(lines))
+    moves = list(get_moves_from_log(lines, target_folder))
 
-    if not all_moves:
-        print("No moves found to undo.")
+    if not moves:
+        print(f"No recent session found for: {target_folder}")
         return
 
-    to_undo = all_moves[-number_of_moves:]
-    print(f"Undoing the last {len(to_undo)} moves...")
+    to_undo = moves[-limit:]
+    print(f"Reversing {len(to_undo)} moves for {target_folder}...")
     print("")
-
     for move in reversed(to_undo):
         current = Path(move["current"])
         original = Path(move["original"])
-
         if current.exists():
             try:
                 shutil.move(str(current), str(original))
                 print(f"Restored: {original.name}")
-                logger.info(f"Successfully restored {original.name}")
+                logger.info(f"UNDO: Restored {original}")
             except Exception as e:
-                print(f"Error restoring {original.name}: {e}")
-                logger.critical(f"There was an error restorting {original.name}: {e}")
+                print(f"Couldn't restore {original.name}: {e}")
+                logger.error(
+                    f"UNDO ERROR: Could not move {current} back to {original}. Reason: {e}"
+                )
         else:
-            print(f"Skip: {current} not found.")
+            print(f"Skip: {current.name} (not found)")
+            logger.warning(
+                f"UNDO SKIP: Source file {current} disappeared before restore."
+            )
 
 
 def main():
@@ -226,6 +248,7 @@ Examples:
   organize "C:\\Users\\name\\Downloads" --dry-run # preview the changes
   organize .          # organize current directory
   organize -u 5 # undo the last 5 moves 
+  organize 
 """,
     )
 
@@ -251,39 +274,54 @@ Examples:
         help="undo the last N changes based on the log file (default: 10)",
     )
 
+    parser.add_argument(
+        "-r",
+        "--recursive",
+        action="store_true",
+        help="organize subdirectories as well (default: False)",
+    )
     args = parser.parse_args()
 
-    if args.undo:
-        run_undo(LOG_FILE, args.undo)
-        return
     if args.folder is None:
         parser.print_help()
         sys.exit(0)
 
-    if args.folder == ".":
-        folder_path = Path.cwd().resolve()
+    folder_path = Path(args.folder).resolve()
 
-    else:
-        folder_path = Path(args.folder).resolve()
+    if args.undo:
+        num = args.undo if isinstance(args.undo, int) else 10
+        run_undo(LOG_FILE, folder_path, num)
+        return
 
     try:
         with FileOrganizerSession(folder_path) as session:
             print(f"Organizing folder: {folder_path}")
-            logger.info(f"---STARTING SESSION FOR {folder_path}---")
-            sortFiles(session.folder, session, dry_run=args.dry_run)
+            logger.info(f"--- STARTING SESSION FOR {folder_path} ---")
+            sortFiles(
+                session.folder, session, dry_run=args.dry_run, recursive=args.recursive
+            )
             print("")
-            print(f"Saved logs to: {LOG_FILE}")
+
     except ProtectedSystemFolder as e:
         print(f"SECURITY ALERT: {e}")
         logger.critical(f"SECURITY VIOLATION ATTEMPT: {e.foldername}")
+
     except InvalidFolderError as e:
         print(f"PATH ERROR: {e}")
         logger.critical(f"INVALID PATH:  {e.foldername}")
+
     except Exception as e:
         print(f"UNCAPTURED ERROR: {e}")
 
     finally:
-        logger.info(f"---ENDING SESSION FOR {folder_path}---")
+        if "folder_path" in locals():
+            logger.info(f"--- ENDING SESSION FOR {folder_path} ---")
+
+        # Get the path to the config file
+        config_file = get_user_config_dir() / "extensions.json"
+
+        print(f"Config file used: {config_file}")
+        print(f"Saved logs to: {LOG_FILE}")
 
 
 if __name__ == "__main__":
