@@ -72,12 +72,12 @@ or
 organize .
 ```
 
-| Option        | Description                                                           |
-| :------------ | :-------------------------------------------------------------------- |
-| `folder_path` | Path to the folder you want to organize (required).                   |
-| `--dry-run`   | Preview what would be moved without actually moving files (optional). |
-| `--help`      | Show a help message.                                                  |
-| `--undo`      | Undo changes (default = 10).                                          |
+| Option                | Description                                            |
+| :-------------------- | :----------------------------------------------------- |
+| `folder_path`         | Path to the folder you want to organize (required)     |
+| `--undo` or `-u`      | Undo changes (default = 10).                           |
+| `--recursive` or `-r` | Sorts through subdirectories as well (default = false) |
+| `--help` or `-h`      | Show a help message                                    |
 ### Examples
 
 ```bash
@@ -87,8 +87,11 @@ organize .
 # Organize your Documents folder
 organize "C:\Users\users\Documents"
 
+# Organize your Documents folder and its subdirectories
+organize "C:\Users\users\Documents" --recursive
+
 # Dry run – see what would happen
-organize "C:\Users\users\Desktop" --dry-run
+organize "C:\Users\users\Desktop" -d -r
 
 # Undo last 7 moves 
 organize C:\Users\users\Desktop" -u 7
