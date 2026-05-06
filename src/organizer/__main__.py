@@ -81,7 +81,7 @@ def moveFiles(file, folder, category, dry_run=False):
 
     shutil.move(str(file), str(destination_path))
     print(f"Moved: {file.name} → {destination_path}")
-    logger.info(f"Moved: {file.name} to {destination_path}")
+    logger.info(f"Moved: {file.resolve()} to {destination_path.resolve()}")
 
 
 def get_user_config_dir():
@@ -119,7 +119,7 @@ def ensure_user_config():
                 f"Default config missing. Created minimal config at: {user_config_file}"
             )
     else:
-        # Optional: remind user where config is (can be removed if too verbose)
+
         print(f"Using user config: {user_config_file}")
 
     return user_config_file
@@ -138,8 +138,19 @@ def sortFiles(folder, session, dry_run=False):
         for ext in exts:
             mapping[ext.lower()] = category
 
+    current_script = Path(__file__).resolve()
+
+    # Exclude project root
+    project_root = current_script.parent.parent
+
     for file in folder.iterdir():
+
+        abs_fie = file.resolve()
+
         if not file.is_file():
+            continue
+
+        if abs_fie == current_script or abs_fie == LOG_FILE.resolve():
             continue
 
         if file.name.startswith("."):
@@ -148,10 +159,55 @@ def sortFiles(folder, session, dry_run=False):
         file_extension = file.suffix.lower()
         category = mapping.get(file_extension, "Others")
         if dry_run:
-            print(f"[DRY RUN]: {file.name} -> {category}")
+            continue
         else:
             moveFiles(file, folder, category, dry_run=dry_run)
             session.count += 1
+
+
+def stream_log_lines(log_path):
+    with open(log_path, "r") as f:
+        for line in f:
+            yield line.strip()
+
+
+def get_moves_from_log(lines):
+    for line in lines:
+
+        if "Moved:" in line and " to " in line:
+            try:
+                parts = line.split("Moved: ")[1].split(" to ")
+                original_path = parts[0].strip()
+                new_path = parts[1].strip()
+
+                yield {"original": original_path, "current": new_path}
+            except IndexError:
+                continue
+
+
+def run_undo(log_path, number_of_moves):
+    lines = stream_log_lines(log_path)
+    all_moves = list(get_moves_from_log(lines))
+
+    if not all_moves:
+        print("No moves found to undo.")
+        return
+
+    to_undo = all_moves[-number_of_moves:]
+    print(f"Undoing the last {len(to_undo)} moves...")
+
+    for move in reversed(to_undo):
+        current = Path(move["current"])
+        original = Path(move["original"])
+
+        if current.exists():
+            try:
+                shutil.move(str(current), str(original))
+                print(f"Restored: {original.name}")
+            except Exception as e:
+                print(f"Error restoring {original.name}: {e}")
+        else:
+            print(f"Skip: {current} not found.")
 
 
 def main():
@@ -162,9 +218,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  organize C:\\Users\\name\\Downloads
-  organize "C:\\Users\\name\\Downloads" --dry-run
+  organize C:\\Users\\name\\Downloads # organize the Downloads Folders
+  organize "C:\\Users\\name\\Downloads" --dry-run # preview the changes
   organize .          # organize current directory
+  organize -u 5 # undo the last 5 moves 
 """,
     )
 
@@ -174,24 +231,41 @@ Examples:
         help="path to folder to organize (use '.' for current directory)",
     )
     parser.add_argument(
+        "-d",
         "--dry-run",
         action="store_true",
-        help="preview the changes without committing them. (optional)",
+        help="preview the changes without committing them (optional)",
+    )
+
+    parser.add_argument(
+        "-u",
+        "--undo",
+        nargs="?",
+        const=10,
+        type=int,
+        metavar="N",
+        help="undo the last N changes based on the log file (default: 10)",
     )
 
     args = parser.parse_args()
+
+    if args.undo:
+        run_undo(LOG_FILE, args.undo)
+        return
     if args.folder is None:
         parser.print_help()
         sys.exit(0)
 
     if args.folder == ".":
         folder_path = Path.cwd().resolve()
+
     else:
         folder_path = Path(args.folder).resolve()
 
     try:
         with FileOrganizerSession(folder_path) as session:
             print(f"Organizing folder: {folder_path}")
+            logger.info(f"---STARTING SESSION FOR {folder_path}---")
             print("")
             sortFiles(session.folder, session, dry_run=args.dry_run)
             print(f"Saved logs to: {LOG_FILE}")
@@ -203,6 +277,9 @@ Examples:
         logger.critical(f"INVALID PATH:  {e.foldername}")
     except Exception as e:
         print(f"UNCAPTURED ERROR: {e}")
+
+    finally:
+        logger.info(f"---ENDING SESSION FOR {folder_path}---")
 
 
 if __name__ == "__main__":
