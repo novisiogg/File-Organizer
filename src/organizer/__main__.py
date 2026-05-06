@@ -121,6 +121,7 @@ def ensure_user_config():
     else:
 
         print(f"Using user config: {user_config_file}")
+        print("")
 
     return user_config_file
 
@@ -145,12 +146,12 @@ def sortFiles(folder, session, dry_run=False):
 
     for file in folder.iterdir():
 
-        abs_fie = file.resolve()
+        abs_file = file.resolve()
 
         if not file.is_file():
             continue
 
-        if abs_fie == current_script or abs_fie == LOG_FILE.resolve():
+        if abs_file == current_script or abs_file == LOG_FILE.resolve():
             continue
 
         if file.name.startswith("."):
@@ -158,10 +159,8 @@ def sortFiles(folder, session, dry_run=False):
 
         file_extension = file.suffix.lower()
         category = mapping.get(file_extension, "Others")
-        if dry_run:
-            continue
-        else:
-            moveFiles(file, folder, category, dry_run=dry_run)
+        moveFiles(file, folder, category, dry_run=dry_run)
+        if not dry_run:
             session.count += 1
 
 
@@ -266,7 +265,6 @@ Examples:
         with FileOrganizerSession(folder_path) as session:
             print(f"Organizing folder: {folder_path}")
             logger.info(f"---STARTING SESSION FOR {folder_path}---")
-            print("")
             sortFiles(session.folder, session, dry_run=args.dry_run)
             print(f"Saved logs to: {LOG_FILE}")
     except ProtectedSystemFolder as e:
