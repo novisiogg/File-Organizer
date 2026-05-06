@@ -106,6 +106,7 @@ def ensure_user_config():
         if default_config.exists():
             shutil.copy(default_config, user_config_file)
             print(f"Created user config file: {user_config_file}")
+            print("")
         else:
             # fallback minimal config (should not happen normally)
             fallback = {
@@ -118,6 +119,7 @@ def ensure_user_config():
             print(
                 f"Default config missing. Created minimal config at: {user_config_file}"
             )
+            print("")
     else:
 
         print(f"Using user config: {user_config_file}")
@@ -266,6 +268,7 @@ Examples:
             print(f"Organizing folder: {folder_path}")
             logger.info(f"---STARTING SESSION FOR {folder_path}---")
             sortFiles(session.folder, session, dry_run=args.dry_run)
+            print("")
             print(f"Saved logs to: {LOG_FILE}")
     except ProtectedSystemFolder as e:
         print(f"SECURITY ALERT: {e}")
