@@ -244,10 +244,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  organize C:\\Users\\name\\Downloads -> Organize Downloads folder
-  organize "C:\\Users\\name\\Downloads" --dry-run -> See the queued changes 
-  organize . -r -> Organize current directory along its subdirectories                       
-  organize C:\\Users\\name\\Downloads -u 5 -> Undo last 5 changes to the Downloads folder
+  `organize C:\\Users\\name\\Downloads`
+      Organize Downloads folder
+      
+  `organize \"C:\\Users\\name\\Downloads\" --dry-run`
+      Preview changes without moving
+      
+  `organize . -r`
+      Organize current directory and all subdirectories
+      
+  `organize C:\\Users\\name\\Downloads -u 5`
+      Undo the last 5 moves
 """,
     )
 
