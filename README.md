@@ -76,7 +76,8 @@ organize .
 | :------------ | :-------------------------------------------------------------------- |
 | `folder_path` | Path to the folder you want to organize (required).                   |
 | `--dry-run`   | Preview what would be moved without actually moving files (optional). |
-| `--help`      | Shows a help message.                                                 |
+| `--help`      | Show a help message.                                                  |
+| `--undo`      | Undo changes (default = 10).                                          |
 ### Examples
 
 ```bash
@@ -88,6 +89,9 @@ organize "C:\Users\users\Documents"
 
 # Dry run – see what would happen
 organize "C:\Users\users\Desktop" --dry-run
+
+# Undo last 7 moves 
+organize C:\Users\users\Desktop" -u 7
 ```
 
 ## Features
@@ -97,19 +101,18 @@ organize "C:\Users\users\Desktop" --dry-run
 - **Safe duplicate handling** – if a file name already exists, it is renamed with a `(1)`, `(2)`, etc.
 - **Dry‑run mode** – preview changes before committing.
 - **Protection for system folders** – refuses to run on `Windows`, `System32`, `Program Files`, etc.
-- **Logging** – every move is logged to `~/.file_organizer/logs/app.log`.
+- **Logging** – every move is logged to `~/.file_organizer/logs/app.log` in case you want to undo the changes.
 
 ## Customization
 
 To customize categories without losing changes when updating the package:
 
-1. Create a user config folder:
-   - **Linux/macOS**: `~/.config/organizer/`
-   - **Windows**: `%APPDATA%\organizer\`
+1. Once the script is launched it automatically creates user config file:
+   - **Linux/macOS**: `~/.config/organizer/extensions.json`
+   - **Windows**: `%APPDATA%\organizer\extensions.json`
 
-2. Copy the default `extensions.json` from the package installation into that folder.
+2. Edit the file as you like – your changes will be remembered across package updates.
 
-3. Edit the copied file – your changes will be remembered across package updates.
 
 ## Requirements
 
